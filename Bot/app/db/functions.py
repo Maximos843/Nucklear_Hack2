@@ -100,6 +100,62 @@ async def save_message_to_db(user_tg_id,
             conn.close()
             print('Соединение с SQLite закрыто')
 
+def get_passenger_flow_from_db(station, line_name, dt):
+    print('TEST!!!')
+    result = None
+    try:
+        conn = sqlite3.connect(db_name)
+        cur = conn.cursor()
+        res = cur.execute(
+            f'''
+            SELECT line_name, passenger_cnt FROM passenger_flow
+            WHERE LOWER(station)=LOWER('{station}') 
+            -- AND LOWER(line_name)=LOWER('{line_name}')
+            AND DATE(dt)='{dt}'
+            ORDER BY id DESC
+            '''
+        )
+        print(dt)
+        result = res.fetchall()
+        conn.commit()
+        cur.close()
+    except sqlite3.Error as error:
+        print('Ошибка при работе с SQLite', error)
+    finally:
+        if conn:
+            conn.close()
+            # print('Соединение с SQLite закрыто')
+    if result is not None and len(result) > 0:
+        # print(result[0])
+        return result#[0][0]
+    else:
+        return None
+
+def add_passenger_flow_information(station, line_number, line_name, dt, passenger_cnt):
+    result = None
+    try:
+        conn = sqlite3.connect(db_name)
+        cur = conn.cursor()
+        res = cur.execute(
+            f'''
+            INSERT INTO passenger_flow (station, line_number, line_name, dt, passenger_cnt)
+            VALUES ('{station}', '{line_number}', '{line_name}', '{dt}', '{passenger_cnt}');
+            '''
+        )
+        result = res.fetchall()
+        conn.commit()
+        cur.close()
+    except sqlite3.Error as error:
+        print('Ошибка при работе с SQLite', error)
+    finally:
+        if conn:
+            conn.close()
+            print('Соединение с SQLite закрыто')
+    if result is not None:
+        return result
+    else:
+        return None
+
 # async def save_psychological_state_to_db(name, typeOfState, description):
 #     try:
 #         conn = sqlite3.connect(db_name)
