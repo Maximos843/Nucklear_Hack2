@@ -1,43 +1,42 @@
 import sqlite3
 import datetime
-db_name = 'psy_bot_db.sql'
+db_name = 'mos_trans_proekt_bot_db.sql'
 name_max_length = 255
-# Review 11.07.2023
+# TODO REVIEW 20.04.2024
 def create_tables_if_not_exists():
     try:
         conn = sqlite3.connect(db_name)
         cur = conn.cursor()
         cur.execute(
             f'''
-            CREATE TABLE IF NOT EXISTS ChatHistory (
+            CREATE TABLE IF NOT EXISTS passenger_flow (
             id INTEGER PRIMARY KEY AUTOINCREMENT, 
-            user_hash_tg_id text NOT NULL, 
-            chat_conditional_branch_id int,
-            date timestamp NOT NULL,
-            msg_bot text NOT NULL,
-            msg_user text NOT NULL,
-            chat_type varchar({name_max_length}) NOT NULL,
-            FOREIGN KEY (chat_conditional_branch_id)  REFERENCES ChatConditionalBranches (id) ON DELETE SET NULL);
+            station varchar({name_max_length}) NOT NULL, 
+            line_number integer NOT NULL,
+            line_name varchar({name_max_length}) NOT NULL,
+            dt timestamp NOT NULL,
+            passenger_cnt integer NOT NULL);
+            --FOREIGN KEY (chat_conditional_branch_id)  REFERENCES ChatConditionalBranches (id) ON DELETE SET NULL);
             '''
         )
         cur.execute(
             f'''
-            CREATE TABLE IF NOT EXISTS ChatConditionalBranches (
+            CREATE TABLE IF NOT EXISTS chat_history (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            psychological_state_id int,
-	        name varchar({name_max_length}) NOT NULL,
-	        condition text NOT NULL,
-	        branch text NOT NULL,
-	        FOREIGN KEY (psychological_state_id)  REFERENCES PsychologicalStates (id) ON DELETE SET NULL);
+            user_tg_id varchar({name_max_length}) NOT NULL,
+	        dt timestamp NOT NULL,
+	        msg_bot text NOT NULL,
+	        msg_user text NOT NULL);
+	        -- FOREIGN KEY (psychological_state_id)  REFERENCES PsychologicalStates (id) ON DELETE SET NULL);
             ''')
-        cur.execute(
-            f'''
-            CREATE TABLE IF NOT EXISTS PsychologicalStates (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name varchar({name_max_length}) NOT NULL,
-	        typeOfState varchar({name_max_length}) NOT NULL,
-	        description text NOT NULL);
-            ''')
+        # cur.execute(
+        #     f'''
+        #     CREATE TABLE IF NOT EXISTS PsychologicalStates (
+        #     id INTEGER PRIMARY KEY AUTOINCREMENT,
+        #     name varchar({name_max_length}) NOT NULL,
+	    #     typeOfState varchar({name_max_length}) NOT NULL,
+	    #     description text NOT NULL);
+        #     ''')
         conn.commit()
         cur.close()
     except sqlite3.Error as error:
@@ -47,7 +46,7 @@ def create_tables_if_not_exists():
             conn.close()
             print('Соединение с SQLite закрыто')
 
-# регистрации нет, пока что не нужно
+# TODO: регистрации нет, пока что не нужно
 
 # def user_exists_in_db(user_id):
 #     try:
@@ -79,19 +78,17 @@ def if_none(val):
         return 'NULL'
     return val
 
-async def save_message_to_db(user_hash_tg_id,
-                             chat_conditional_branch_id,
+
+async def save_message_to_db(user_tg_id,
                              msg_bot,
-                             msg_user,
-                             chat_type):
-    chat_conditional_branch_id = if_none(chat_conditional_branch_id)
+                             msg_user):
     try:
         conn = sqlite3.connect(db_name)
         cur = conn.cursor()
         cur.execute(
             f'''
-            INSERT INTO ChatHistory (user_hash_tg_id, chat_conditional_branch_id, date, msg_bot, msg_user, chat_type)
-            VALUES ('{user_hash_tg_id}', {chat_conditional_branch_id}, '{datetime.datetime.now()}', '{msg_bot}', '{msg_user}', '{chat_type}');
+            INSERT INTO chat_history (user_tg_id, dt, msg_bot, msg_user)
+            VALUES ('{user_tg_id}', '{datetime.datetime.now()}', '{msg_bot}', '{msg_user}');
             '''
         )
         conn.commit()
@@ -103,44 +100,44 @@ async def save_message_to_db(user_hash_tg_id,
             conn.close()
             print('Соединение с SQLite закрыто')
 
-async def save_psychological_state_to_db(name, typeOfState, description):
-    try:
-        conn = sqlite3.connect(db_name)
-        cur = conn.cursor()
-        cur.execute(
-            f'''
-            INSERT INTO PsychologicalStates (name, typeOfState, description)
-            VALUES ('{name}', '{typeOfState}', '{description}');
-            '''
-        )
-        conn.commit()
-        cur.close()
-    except sqlite3.Error as error:
-        print('Ошибка при работе с SQLite', error)
-    finally:
-        if conn:
-            conn.close()
-            print('Соединение с SQLite закрыто')
+# async def save_psychological_state_to_db(name, typeOfState, description):
+#     try:
+#         conn = sqlite3.connect(db_name)
+#         cur = conn.cursor()
+#         cur.execute(
+#             f'''
+#             INSERT INTO PsychologicalStates (name, typeOfState, description)
+#             VALUES ('{name}', '{typeOfState}', '{description}');
+#             '''
+#         )
+#         conn.commit()
+#         cur.close()
+#     except sqlite3.Error as error:
+#         print('Ошибка при работе с SQLite', error)
+#     finally:
+#         if conn:
+#             conn.close()
+#             print('Соединение с SQLite закрыто')
 
-async def save_conditional_branch_to_db(psychological_state_id, name, condition, branch):
-    psychological_state_id = if_none(psychological_state_id)
-    try:
-        conn = sqlite3.connect(db_name)
-        cur = conn.cursor()
-        cur.execute(
-            f'''
-            INSERT INTO ChatConditionalBranches (psychological_state_id, name, condition, branch)
-            VALUES ({psychological_state_id}, '{name}', '{condition}', '{branch}');
-            '''
-        )
-        conn.commit()
-        cur.close()
-    except sqlite3.Error as error:
-        print('Ошибка при работе с SQLite', error)
-    finally:
-        if conn:
-            conn.close()
-            print('Соединение с SQLite закрыто')
+# async def save_conditional_branch_to_db(psychological_state_id, name, condition, branch):
+#     psychological_state_id = if_none(psychological_state_id)
+#     try:
+#         conn = sqlite3.connect(db_name)
+#         cur = conn.cursor()
+#         cur.execute(
+#             f'''
+#             INSERT INTO ChatConditionalBranches (psychological_state_id, name, condition, branch)
+#             VALUES ({psychological_state_id}, '{name}', '{condition}', '{branch}');
+#             '''
+#         )
+#         conn.commit()
+#         cur.close()
+#     except sqlite3.Error as error:
+#         print('Ошибка при работе с SQLite', error)
+#     finally:
+#         if conn:
+#             conn.close()
+#             print('Соединение с SQLite закрыто')
 
 # example of insert
 
@@ -210,58 +207,58 @@ async def save_conditional_branch_to_db(psychological_state_id, name, condition,
 #     else:
 #         return None
 
-async def get_psychological_state_id(psychological_state):
-    result = None
-    try:
-        conn = sqlite3.connect(db_name)
-        cur = conn.cursor()
-        res = cur.execute(
-            f'''
-            SELECT id FROM PsychologicalStates
-            WHERE name == '{psychological_state}'
-            '''
-        )
-        result = res.fetchall()
-        conn.commit()
-        cur.close()
-    except sqlite3.Error as error:
-        print('Ошибка при работе с SQLite', error)
-    finally:
-        if conn:
-            conn.close()
-            print('Соединение с SQLite закрыто')
+# async def get_psychological_state_id(psychological_state):
+#     result = None
+#     try:
+#         conn = sqlite3.connect(db_name)
+#         cur = conn.cursor()
+#         res = cur.execute(
+#             f'''
+#             SELECT id FROM PsychologicalStates
+#             WHERE name == '{psychological_state}'
+#             '''
+#         )
+#         result = res.fetchall()
+#         conn.commit()
+#         cur.close()
+#     except sqlite3.Error as error:
+#         print('Ошибка при работе с SQLite', error)
+#     finally:
+#         if conn:
+#             conn.close()
+#             print('Соединение с SQLite закрыто')
+#
+#     if result is not None:
+#         return result[0][0]
+#     else:
+#         return None
 
-    if result is not None:
-        return result[0][0]
-    else:
-        return None
-
-async def get_chat_conditional_branches_from_db(psychological_state):
-    result = None
-    psychological_state_id = await get_psychological_state_id(psychological_state)
-    try:
-        conn = sqlite3.connect(db_name)
-        cur = conn.cursor()
-        res = cur.execute(
-            f'''
-            SELECT condition, branch FROM ChatConditionalBranches
-            WHERE psychological_state_id == '{psychological_state_id}'
-            '''
-        )
-        result = res.fetchall()
-        conn.commit()
-        cur.close()
-    except sqlite3.Error as error:
-        print('Ошибка при работе с SQLite', error)
-    finally:
-        if conn:
-            conn.close()
-            print('Соединение с SQLite закрыто')
-
-    if result is not None:
-        return result
-    else:
-        return None
+# async def get_chat_conditional_branches_from_db(psychological_state):
+#     result = None
+#     psychological_state_id = await get_psychological_state_id(psychological_state)
+#     try:
+#         conn = sqlite3.connect(db_name)
+#         cur = conn.cursor()
+#         res = cur.execute(
+#             f'''
+#             SELECT condition, branch FROM ChatConditionalBranches
+#             WHERE psychological_state_id == '{psychological_state_id}'
+#             '''
+#         )
+#         result = res.fetchall()
+#         conn.commit()
+#         cur.close()
+#     except sqlite3.Error as error:
+#         print('Ошибка при работе с SQLite', error)
+#     finally:
+#         if conn:
+#             conn.close()
+#             print('Соединение с SQLite закрыто')
+#
+#     if result is not None:
+#         return result
+#     else:
+#         return None
 
 # time example
 # async def add_match_to_db(user_id, match_id):
