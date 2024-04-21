@@ -100,7 +100,7 @@ async def save_message_to_db(user_tg_id,
             conn.close()
             print('Соединение с SQLite закрыто')
 
-def get_passenger_flow_from_db(station, line_name, dt):
+async def get_passenger_flow_from_db(station, line_name, dt):
     print('TEST!!!')
     result = None
     try:
@@ -150,7 +150,7 @@ def add_passenger_flow_information(station, line_number, line_name, dt, passenge
     finally:
         if conn:
             conn.close()
-            print('Соединение с SQLite закрыто')
+            # print('Соединение с SQLite закрыто')
     if result is not None:
         return result
     else:

@@ -26,6 +26,7 @@ async def set_commands(bot: Bot):
         # BotCommand(command='/coffee', description='Получить контакт'),
         BotCommand(command='/faq', description='Ответы на часто задаваемые вопросы'),
         BotCommand(command='/support', description='Техническая поддрежка'),
+        BotCommand(command='/start', description='Перезапуск'),
         # BotCommand(command='/cancel', description='Возврат к началу'),
     ]
     await bot.set_my_commands(commands)
