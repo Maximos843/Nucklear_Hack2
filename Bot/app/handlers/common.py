@@ -6,7 +6,7 @@ from aiogram import Dispatcher, types
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
 
-from Model_1.model_1 import *
+from model.model import *
 
 from app.db.functions import get_passenger_flow_from_db
 
