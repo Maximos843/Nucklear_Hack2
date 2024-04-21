@@ -44,19 +44,17 @@ def translate_date(text: str) -> str:
                 year = '2024'
                 result = words[:i-1] + [f"{day}.{month}.{year}"]
         else:
-          result += [words[i]]
+            result += [words[i]]
     return ' '.join(result)
 
 
 def sum_numbers_in_text(text: str) -> str:
     pattern = r'\b(\d+)\s(\d+)\b'
 
-
     def add_nums(match) -> str:
         num1, num2 = match.groups()
         result = int(num1) + int(num2)
         return str(result)
-
 
     result = re.sub(pattern, add_nums, text)
     return result
@@ -74,12 +72,12 @@ def words_to_numbers(text: str) -> str:
 
 
 def change_weird_words_to_normal(text: str) -> str:
-  words = text.split()
-  for key in Variables.DCT_OF_WEIRDS.keys():
-    for i in range(len(words)):
-      if key == words[i]:
-        words[i] = Variables.DCT_OF_WEIRDS[key]
-  return ' '.join(words)
+    words = text.split()
+    for key in Variables.DCT_OF_WEIRDS.keys():
+        for i in range(len(words)):
+            if key == words[i]:
+                words[i] = Variables.DCT_OF_WEIRDS[key]
+    return ' '.join(words)
 
 
 def split_hyphenated_words(text: str) -> str:
