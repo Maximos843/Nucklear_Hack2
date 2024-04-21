@@ -131,6 +131,33 @@ async def get_passenger_flow_from_db(station, line_name, dt):
     else:
         return None
 
+async def get_agg_passenger_flow_from_db(agg, station, dt1, dt2):
+    result = None
+    try:
+        conn = sqlite3.connect(db_name)
+        cur = conn.cursor()
+        res = cur.execute(
+            f'''
+            SELECT line_name, {agg}(passenger_cnt) FROM passenger_flow
+            WHERE LOWER(station)=LOWER('{station}') 
+            AND DATE(dt)>='{dt1}' AND DATE(dt)<='{dt2}'
+            GROUP BY line_name
+            '''
+        )
+        result = res.fetchall()
+        conn.commit()
+        cur.close()
+    except sqlite3.Error as error:
+        print('Ошибка при работе с SQLite', error)
+    finally:
+        if conn:
+            conn.close()
+            print('Соединение с SQLite закрыто')
+    if result is not None and len(result) > 0:
+        return result
+    else:
+        return None
+
 def add_passenger_flow_information(station, line_number, line_name, dt, passenger_cnt):
     result = None
     try:
