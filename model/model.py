@@ -1,5 +1,6 @@
 import dateparser
 from transformers import pipeline
+import datetime
 import nltk
 from config import Variables
 import re
@@ -18,43 +19,48 @@ model_pipeline = pipeline(
 
 
 class MetroDataExtractor:
-    def __init__(self, text: str):
-        self.text = text
-        self.tokens = nltk.word_tokenize(text)
+    def __init__(self):
+        pass
 
     def process_list_to_strings(self, tokens: list) -> str:
         return ' '.join(tokens)
 
-    def extract_station(self) -> str:
-        answer = model_pipeline(question=Variables.QUESTION_STATION, context=self.text)['answer']
+    def extract_station(self, text: str) -> str:
+        answer = model_pipeline(question=Variables.QUESTION_STATION, context=text)['answer']
         result = normalize_station_name(answer.strip(), Variables.STATIONS)
         return result
 
-    def extract_date(self) -> str:
+    def extract_date(self, text) -> str:
+        #tokens = nltk.word_tokenize(text)
+        time_delta = datetime.timedelta(days=17)
         for k, v in Variables.HALF.items():
-            self.text = self.text.replace(k, str(v))
-        self.text = lemmatize_sentence(self.text)
-        if 'следующий' in self.text:
-            self.text = self.text.replace('следующий', 'через 1')
-        if 'прошлый' in self.text:
-            self.text = self.text.replace('прошлый', '1')
-        matches = re.findall(Variables.PATTERN, self.text)
+            text = text.replace(k, str(v))
+        text = lemmatize_sentence(text)
+        if 'следующий' in text:
+            text = text.replace('следующий', 'через 1')
+        if 'прошлый' in text:
+            text = text.replace('прошлый', '1')
+        matches = re.findall(Variables.PATTERN, text)
         try:
             res = str(dateparser.parse(matches[0], settings={'DATE_ORDER': 'YMD'})).split(' ')[0]
             if res != 'None':
-                return res
+                res2 = datetime.datetime.strptime(res, '%Y-%m-%d')
+                res2 -= time_delta
+                return res2.strftime("%Y-%m-%d")
         except IndexError:
             pass
-        answer = model_pipeline(question=Variables.QUESTION_DATE, context=self.text)['answer']
+        answer = model_pipeline(question=Variables.QUESTION_DATE, context=text)['answer']
         answer = translate_date(words_to_numbers(change_weird_words_to_normal(split_hyphenated_words(answer))))
         res = str(dateparser.parse(answer, settings={'DATE_ORDER': 'YMD'})).split(' ')[0]
         if res != 'None':
-            return res
+            res2 = datetime.datetime.strptime(res, '%Y-%m-%d')
+            res2 -= time_delta
+            return res2.strftime("%Y-%m-%d")
         return 'Incorrect request'
 
 
 if __name__ == '__main__':
     print('Извлечение даты и времени из текста')
     text = 'Скажи данные о пассажиропотоке вчера на станции метро Сокольник'
-    extractor = MetroDataExtractor(text)
-    print(extractor.extract_station(), extractor.extract_date())
+    extractor = MetroDataExtractor()
+    print(extractor.extract_station(text), extractor.extract_date(text))
